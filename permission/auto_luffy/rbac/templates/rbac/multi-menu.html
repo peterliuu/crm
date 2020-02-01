@@ -1,0 +1,25 @@
+{#{% for item in menu_dict.values %}#}
+{##}
+{#        <a href="#">#}
+{#            <span class="icon-wrap"><i class="fa {{ item.icon }}"></i></span>{{ item.title }}#}
+{#        </a>#}
+{#    {% for ele in item.children %}#}
+{#        <a href="{{ ele.url }}" class="{{ ele.status }}">#}
+{#            {{ ele.title }}#}
+{#        </a>#}
+{#    {% endfor %}#}
+{#{% endfor %}#}
+
+
+<div class="multi-menu">
+    {% for item in menu_dict.values %}
+        <div class="item">
+            <div class="title"><span class="icon-wrap"><i class="fa {{ item.icon }}"></i></span> {{ item.title }}</div>
+            <div class="body {{ item.class }}">
+                {% for per in item.children %}
+                    <a class="{{ per.class }}" href="{{ per.url }}">{{ per.title }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>

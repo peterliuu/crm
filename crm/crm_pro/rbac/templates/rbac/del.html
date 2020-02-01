@@ -1,0 +1,45 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="luffy-container">
+        <div class="alert alert-danger" role="alert">
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+            <span class="sr-only">Error:</span>
+            删除后不可恢复! 请确认是否确认删除？
+            <form method="post">
+                {% csrf_token %}
+                <div style="margin-top: 20px">
+                    <a href="{{ cancel_url }}" class="btn btn-default">取消</a>
+                    <input type="submit" value="确 认" class="btn btn-danger">
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

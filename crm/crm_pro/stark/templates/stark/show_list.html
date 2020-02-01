@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <div class="luffy-container">
+
+        {% if search_group_row_list %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="fa fa-filter" aria-hidden="true"></span>
+                    快速选择
+                </div>
+                <div class="panel-body">
+                    <div class="search-group">
+                        {% for item in search_group_row_list %}
+                            <div class="row">
+                                {% for info in item %}
+                                    {{ info|safe }}
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+
+
+        {% if filter_list %}
+            <div style="float: right; margin: 5px 0">
+                <form method="get" class="form-inline">
+                    <div class="form-group">
+                        <input type="text" class="form-control input-sm" placeholder="请输入查询条件" name="search"
+                               value="{{ search_value }}">
+                        <button class="btn btn-primary btn-sm" type="submit">
+                            <i class="fa fa-search" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {% if multi_dict %}
+                <div style="float: left; margin: 5px 10px 5px 0">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <select name="multi_data" id="" class="form-control input-sm">
+                                <option value="">-请选择具体操作-</option>
+                                {% for func_name, func_text in multi_dict.items %}
+                                    <option value="{{ func_name }}">{{ func_text }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="submit" value="提交" class="btn btn-warning btn-sm">
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            {% if add_btn %}
+                <div style="margin: 5px 0; float: left;">
+
+                    {{ add_btn|safe }}
+
+                </div>
+            {% endif %}
+
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    {% for row in header_list %}
+                        <th>{{ row }}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in info_list %}
+                    <tr>
+                        {% for foo in obj %}
+                            <td>{{ foo }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </form>
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {{ pager.page_html|safe }}
+            </ul>
+        </nav>
+    </div>
+
+{% endblock %}

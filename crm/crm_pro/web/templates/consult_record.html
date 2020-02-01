@@ -1,0 +1,39 @@
+{% extends 'layout.html' %}
+{% block css %}
+    <style>
+        span {
+            padding-left: 4px;
+        }
+
+        i {
+            margin-right: 3px;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="luffy-container">
+        <div style="margin: 5px 0 10px 0;">
+            {% if add_btn %}
+                {{ add_btn|safe }}
+            {% endif %}
+        </div>
+        {% for row in info_list %}
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    {{ row.1 }}
+                    <div style="float: right;margin-top: 12px">{{ row.4 }}</div>
+                    <div style="margin-top: 5px;">
+                        <i class="fa fa-address-book-o" aria-hidden="true"></i>&nbsp;<span>{{ row.2 }}</span>
+                        <i class="fa fa fa-clock-o" aria-hidden="true"></i><span>{{ row.3 }}</span>
+                    </div>
+
+                </div>
+            </div>
+        {% endfor %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {{ pager.page_html|safe }}
+            </ul>
+        </nav>
+    </div>
+{% endblock %}

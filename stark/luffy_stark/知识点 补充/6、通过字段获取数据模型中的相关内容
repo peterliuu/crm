@@ -1,0 +1,9 @@
+数据字段 key--str
+1 获取字段对象
+field_obj = model_class._meta.get_field(key)
+
+2 获取字段对象的具体值choices数据
+field_obj.choices
+
+3 获取字段对象的关联表
+field_obj.related_model

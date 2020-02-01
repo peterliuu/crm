@@ -1,0 +1,9 @@
+{% for item in menu_record %}
+    {#  当数据中遇到id，则说明当前为最后一个数据，不可点击  #}
+    {% if item.class %}
+        <li class={{ item.class }}>{{ item.title }}</li>
+    {% else %}
+        <li><a href="{{ item.url }}">{{ item.title }}</a></li>
+    {% endif %}
+
+{% endfor %}

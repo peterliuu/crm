@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <div class="luffy-container">
+        {% for obj in record_queryset %}
+            <div class="panel panel-default">
+                <div class="panel-body">
+                   {{ obj.note }}
+                    <div style="margin-top: 5px">
+                         <i class="fa fa-address-book-o" aria-hidden="true">{{ obj.consultant.name }}</i>&nbsp;
+                         <i class="fa fa fa-clock-o" aria-hidden="true">{{ obj.date }}</i>
+                    </div>
+
+                    <div style="float: right"></div>
+                </div>
+            </div>
+        {% endfor %}
+
+
+    </div>
+
+{% endblock %}

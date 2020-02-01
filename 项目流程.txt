@@ -1,0 +1,452 @@
+大目标：CRM系统
+	-权限
+	-stark组件
+	-CRM业务
+	
+步骤：
+	第一部分：权限组件
+		1、创建django项目 luffy-permission
+		2、2个app：
+				-rbac 权限管理
+				-web 销售管理系统
+		3、app：rbac		
+		4、app：web		
+		5、两个app的整合
+		6、快速完成一个基本的权限控制
+		7、功能完善：将权限相关的内容整合至rbac应用下，以便于后期组件的使用
+		总结：6、7属于权限控制
+		8、动态菜单功能
+			-一级菜单：如何实现动态显示一级菜单
+				a、表结构修改+录入菜单数据
+				b、获取菜单信息并保存至session中
+				c、模板中显示菜单信息
+					PS：inclusion_tag
+				拓展：如何默认选中菜单：
+					请求url==menu_list['url']
+			-二级菜单
+				a、session中存储的菜单信息结构：
+					{
+					1:
+					{'title': '信息管理', 'icon': 'fa-battery-three-quarters', 
+					'children': 
+					[{'url': '/customer/list/', 'title': '客户列表'}, {'url': '/payment/list/', 'title': '账单列表'}]}, 
+					2: 
+					{'title': '用户信息', 'icon': 'fa-bathtub', 
+					'children': 
+					[{'url': '/user/list', 'title': '用户列表'}]}
+					}
+					权限结构：
+						[
+							"/customer/list/","/customer/add/"……
+						]
+				b、数据库结构：
+					见代码
+				c、页面中显示2级菜单：
+					inclusion_tag
+		9、点击非菜单的权限时，默认选中或默认展开
+			点击某个不能成为菜单的权限时，指定一个可以成为菜单的权限，让其默认选中以及展开
+			-流程：
+				a、数据库设计：需要在权限表中新建一个字段，用于存放当前标签是否归属与某个菜单标签--自关联的字段
+				b、思路：
+					-登录：做权限和菜单的初始化：
+						-获取菜单信息--结构
+						{
+							1: # menu_id
+							{'title': '信息管理', 'icon': 'fa-battery-three-quarters', 
+							'children': 
+							[{"id': 1, url': '/customer/list/', 'title': '客户列表'},
+							 {"id': 6,'url': '/payment/list/', 'title': '账单列表'}]}, 
+							2: 
+							{'title': '用户信息', 'icon': 'fa-bathtub', 
+							'children': 
+							[{"id': 10,'url': '/user/list', 'title': '用户列表'}]}
+						}
+						-获取权限信息--结构
+						[
+							{"id":1, "url":"/customer/list/", "pid":""}, # 根据pid或id找寻具体的默认菜单
+							{"id":2, "url":"/customer/add/", "pid":1},
+							{"id":3, "url":"/customer/list/(?P<cid>\d+)/", "pid":1},
+							……
+						]
+					-再次访问
+						-中间件进行用户的权限校验（根据权限信息）
+							有权限：找pid或id值，将其放入request中，用于模板时判断
+						-模板中使用inclusion_tag生成动态菜单（根据菜单信息进行动态生成）
+							通过request中传递的id值，在children字段中查找id与其匹配，相同则配置标签的选中及默认信息
+		10、动态生成路径导航信息
+			-流程：
+				a、将permission表中的数据取出、存储进permission_list
+				b、在中间件校验权限信息时，设定列表存储要展现的首页信息：
+					menu_record = ["title":"首页"，"url":"#"]
+				c、在判断权限时，如果有pid则将pid及id信息都存储进menu_record，否则只保存id
+				d、将menu_record存储进request中，设定一个inclusion_tag，进行后期数据展示
+				e、在模板中判别数据是否为最后一个，最后一个则添加"class": 'active'属性，依次渲染至页面中
+		11、权限粒度控制按钮级别--当用户无权限时不显示无权限的按钮或便签信息
+			流程：在菜单html中过滤权限
+				-重新设计permission表结构，增加url别名字段（唯一）--方便查询权限信息
+				-修改存储数据的结构，令url别名为key，之前数据为value
+				-在中间件获取数据时修改获取方式.values()
+				-使用自定义过滤器filter判断name是否在session中
+				-具体显示在html中配置进行判断
+		总结：
+			-权限分配--登录时在session中存储权限信息及访问url时通过中间件校验权限功能
+			-动态菜单--通过menu_dict存储菜单信息，在inclusion_tag中校验加载对应的数据
+			-权限分配
+				问题：如何向每一个用户分配具体的权限信息？分配角色？
+				-通过django admin录入信息
+		12、权限分配
+			a、角色管理
+				-知识点：
+					-forms组件校验数据
+					-根据namespace及name进行反向解析动态生成url
+					-模板的查询顺序： 先在当前的项目下查询，之后根据app顺序查询
+			b、用户管理
+				-知识点：
+					-forms组件校验数据
+						-字段自定制
+						-钩子方法
+						-错误信息提示（中文）LANGUAGE_CODE = 'zh-hans'
+						-重写__init__方法，统一给所有的字段添加属性
+					-根据namespace及name进行反向解析动态生成url
+					-模板的查询顺序： 先在当前的项目下查询，之后根据app顺序查询
+			c、菜单和权限管理
+				流程：
+					-一级菜单
+					-二级菜单
+					-权限菜单
+				知识点：
+					-为点击的数据添加选中样式
+					-保留原url中的搜索条件  querydict.urlencoded
+						具体步骤：
+						    -结果：mid=1&sid=12无论怎样跳转，原有的搜索条件不能丢！
+							-原数据：http://127.0.0.1:8000/rbac/menu/list/?mid=1&sid=12
+							-添加按钮：menu/add/?_filter=mid=1&sid=12
+							-提交按钮：menu/list/?mid=1&sid=12
+					-模板中整型转化为字符类型 1|safe-->"1"
+					-ModelForm中自定制RadioSelect单选框
+					-ModelForm中显示默认值initial={"menu":menu_obj}
+					-ModelForm中在save保存数据前对instance进行修改操作 form.instance.xxx = xxx
+					-BootstrapModelForm基类对页面表单显示样式进行封装
+			d、权限的批量管理
+				--formset
+					-什么是formset？
+						-Form组件或ModelForm用于做一个表单验证,formset用于做多个表单验证的组件
+					-应用场景？
+						-批量操作
+					-如何实现？
+						具体见示例代码
+					-forset中html的注意点：
+						在html渲染时需要加上{{ formset对象名.management_form }}
+				-自动发现项目中的URL
+					--问题：给你一个项目，请你帮我获取当前项目中都有哪些URL及name  rbac:permission_list
+					-实现思路
+						-见具体代码
+				思路
+					- 1、获取项目中的所有权限 set1
+					- 2、去数据库中获取  set2
+					情况1： 自动发现url数量 > 数据库数量 --> 实现批量增加  PS：通过name对比
+					set1 - set2 --> 添加
+					formset
+					情况2： 自动发现url数量 < 数据库数量 --> 实现批量删除
+					set2 - set1 --> 删除
+					情况3： 自动发现url数量 = 数据库数量 --> 实现批量更新
+					set3 = set1 & set2 -->更新
+					formset
+				知识点
+					-formset 或 ModelFormSet
+					-自动发现项目中的URL
+					-唯一约束信息校验及错误信息添加
+
+			e、权限分配
+				-展示用户、角色、权限信息
+				-选择用户、角色时，页面上的默认选项
+				-角色和权限分配-[保存]
+				-知识点总结：
+					-数据类型设置引用：多个列表在查询时困难，可以转换成一个字典，便于查询
+					-在改变后者时，同时改变前者元素中的值
+						[
+							{id:1, title:信息管理, "children":[]},
+							{id:2, title:权限管理, "children":[]},
+						]
+						--转换--
+						[
+							1:{id:1, title:信息管理, "children":[]},
+							2:{id:2, title:权限管理, "children":[]},
+						]
+					
+					-manytomany字段的数据更新方法（set）--先移除后添加
+
+
+						user_obj.roles.set(role_id_list)
+
+		13、编写使用文档（主机管理程序）		
+	
+	第二部分：stark组件
+		介绍：
+			stark组件，是一个帮助开发者快速实现数据库表的增删改查		
+		目标：
+		10s 完成一张表的增删改查
+
+		前戏：
+			1、django项目启动时，自定义执行某个py文件
+				django启动时，且在读取项目中 路由加载之前执行 某个py文件
+				-实现方法
+					在任意app的apps.py中的Config类中定义ready方法，并调用autodiscover_modules
+
+					from django.apps import AppConfig
+					from django.utils.module_loading import autodiscover_modules
+
+
+					class App02Config(AppConfig):
+						name = 'app02'
+						
+						def ready(self):
+							autodiscover_modules("xxx")
+
+					django在启动时，会去已注册的app目录下寻找xxx.py，并自动导出此模块
+
+					在执行时会执行2次，因为django 在运行时为多线程触发，内部会自动重启
+					避免触发：
+						- python manage.py runserver 127.0.0.1:8000 --noreload
+						- 通过pycharm django 设置 Additional options --noreload
+					提示：
+						如果xxx.py执行的代码向 “某个神奇的地方” 放入一些值，之后的路由加载时，可以去 “某个神奇的地方” 读到原来设定的值
+
+			2、单例模式
+				单：一个
+				例：实例、对象
+
+				通过利用python模块导入特性：在python中，如果导入过得文件再次被导入时，python不会重新解释一遍，而是从内存中直接将原来导入的值拿来使用
+					xxx.py
+					class Foo:
+						pass
+					f = Foo()
+					app.py
+					# 得到的同一个实例
+					import xxx
+					print(xxx.f) 
+					import xxx
+					print(xxx.f)
+
+				提示：
+					如果以后存在一个单例模式的对象，可以先在此对象中放入一个值，然后再在其他的文件中导入该对象，通过对象再次将值获取到。
+			3、django路由分发的本质include
+				- 方式1：
+					urlpatterns = [
+					     path('admin/', admin.site.urls),
+					     path('web/', include("app01.urls")),
+					 ]
+				- 方式2：
+					include元素返回有单个元素的元祖
+					return (urlconf_module, app_name, namespace)
+					urlpatterns = [
+					    path('admin/', admin.site.urls),
+					    path('web/', ("app01.urls", None, None)), 第一个参数是urls文件对象，通过此对象可以获取urls.pattrens获取分发的路由
+					]
+
+				- 方式3：
+					在源码内部，读取路由时：
+						如果第一个参数存在：urls.patterns 属性，则子路由就从该属性中获取
+						如果第一个参数不存在：urls.patterns 属性，则子路由为第一个参数
+
+						urlpatterns = [
+							path('admin/', admin.site.urls),
+							path('web/', ([
+											  path('login/', views.login), 第一个参数有patterns属性，才调用属性，否则为自身
+											  path('index/', views.index),
+										  ], None, None)),
+						]
+				- demo:
+					获取url中的数据通过单例模式+include+url执行前获取数据
+					详见pre_stark项目
+
+		开始：
+			1、 创建django project
+			2、 创建基础业务表并迁移数据库：
+				app01/models.py
+					部门表
+					用户表
+				app02/models.py
+					主机表
+			3、对以上三张表做增删改查
+				a、分析：
+					- 为每张表创建个URL
+					- 为每张表创建4个视图函数
+
+					app01/models.py
+						Depart
+							- app01/depart/add/
+							- app01/depart/list/
+							- app01/depart/edit/(\d+)/
+							- app01/depart/add/(\d+)
+						UserInfo
+							- app01/userinfo/add/
+							- app01/userinfo/list/
+							- app01/userinfo/edit/(\d+)/
+							- app01/userinfo/add/(\d+)
+					app02/models.py
+						Host
+							- app02/host/add/
+							- app02/host/list/
+							- app02/host/edit/(\d+)/
+							- app02/host/add/(\d+)
+				b、为每个app中的每个model类自动创建url及相关的视图函数
+					- 动态生成url
+
+					- 将视图提取到基类
+
+					- url分发及扩展 & 前缀
+
+					- 为url设置别名
+
+					- url别名的重新构建
+
+				c、定制页面显示的列
+					- 基本列表页面列的定制
+					- 页面中的display_list自带字段的页面，默认显示对象信息
+					- 为页面的列预留一个钩子函数--后期自定制显示列
+					- 为页面提供自定义显示的函数
+					- 应用
+
+				d、应用rbac项目的样式（Boostrap）
+
+				e、 添加列表分页功能
+
+				f、 添加
+					- 如何显示添加按钮
+					- 添加按钮的URL
+					- 添加按钮进行添加数据
+
+				g、编辑
+				- 编辑按钮（删除按钮）
+				- 页面操作
+
+				h、删除
+			
+			4、其他常用功能
+				- 排序
+				- 模糊搜索
+					- 实现思路：
+						- 在页面中设置form表单，搜索：以GET形式提交请求至后台，后台获取数据进行筛选
+						- 后台获取数据后，根据定义的列（筛选的列）进行数据查询，多列数据为或关系
+					- Q对象查询 q = Q(_connector="OR") q.children.append((查询列,具体条件))
+				- 批量操作
+					- 添加checkbox列
+					- 生成批量操作的‘按钮’
+				- 组合搜索
+				 - 什么是组合搜索
+				 - 如何实现组合搜索
+				 	- 实现思路：根据字段找到其他关联的数据：choice、FK、M2M
+				 		a、 根据具体表获取不同组合配置信息 search_group
+				 		b、 根据配置获取关联数据
+				 		c、 根据配置获取关联数据（含条件信息）
+				 		d、 前端显示具体组合搜索信息
+				 			- 设置字段及过滤信息
+				 			- 根据字段分别获取字段对象或关联表查询集对象
+				 			- 将其在后台统一处理，变为可迭代对象，循环获取具体信息值，在前端展示
+				 		e、 为组合搜素按钮生成URL
+				 			- 生成URL时，不改变其他组的条件
+				 			- 不同组标签多条件筛选
+				 			- 同组标签多选
+
+		总结：
+		 - 页面： 列表、添加、编辑、删除
+		 - 模糊搜索、批量操作、组合搜索		 	
+
+	第三部分： CRM业务开发
+		1、 项目背景
+		 以项目机构为背景的crm项目，系统主要为 销售部、运营部、教质部 提供平台，对他们的工作进行量化，有利于公司信息化的建设
+		 销售部：
+		 	- 公户：公共客户
+		 	- 私户：我的客户 <= 150 + 跟进记录 + 入班申请（财务审核）
+		 运营部：
+		 	- 录入客户信息（公户）
+		 教质部：
+		 	- 考勤
+		 	- 学员访谈
+		 	- 积分管理
+		 	- 转班申请
+		2. 项目开发
+			2.1 概览
+				- 基础业务处理
+					- 校区管理
+					- 部门管理
+					- 用户管理
+					- 课程管理
+					- 开班管理
+				- 客户管理
+					- 公户
+					- 私户
+				- 学员管理
+					- 考勤
+					- 谈话记录
+					- 积分
+				- 应用rbac组件
+			2.2 开发
+				2.2.1 创建项目
+				2.2.2 校区管理
+				2.2.3 部门管理
+				2.2.4 用户管理
+				    - 用户基本操作
+					- 添加页面增加一个确认密码字段 & 编辑页面删除密码字段 
+					- 重置密码 
+					- 用户页面功能增加 
+						- 模糊搜索
+						- 组合搜索
+				2.2.5 课程管理和代码拆分-将具体逻辑分别放入views文件夹中
+				2.2.6 班级管理
+					- 班级管理基本操作
+					- 基于limit_choice_to 关联FK或M2M进行筛选
+					- 班级管理时间插件的应用（stark组件新增datetimepicker组件）
+				2.2.7 客户管理  区分公户与私户--是否有课程顾问跟踪
+					- 公户
+						- 公户基本管理：公户列表、录入客户
+						- 查看跟进记录：
+						- 申请到私户（数据库锁）select_for_update() + with transaction.atomic()事务
+						- 用户登录
+					- 私户
+						- 私户基本管理
+						- 私户踢出到公户
+					跟进记录管理：
+						- 查看：
+						- 添加：
+						- 编辑：
+						- 删除：
+						- 漏洞：
+					缴费&报名
+						业务分析
+							- 学员缴费
+							- 课程顾问：提交缴费申请
+							- 财务：审核（状态更新、入班学习）
+						代码实现
+							- 表结构设计
+							- 查看缴费列表
+							- 添加缴费记录
+							- 缴费审批
+				2.2.8 学员管理
+					学生管理
+					积分管理
+					考勤管理
+						批量生成考勤记录
+						批量设置考勤记录
+				2.2.9 权限应用
+					基本权限校验 
+					粒度控制到按钮
+					
+			2.3 总结
+			留存组件：rbac组件、stark组件 *****
+			crm业务（讲出来） ****
+															    
+
+
+
+
+
+
+
+
+
+
+
+
+

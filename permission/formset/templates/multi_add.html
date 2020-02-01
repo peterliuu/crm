@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>批量操作</title>
+</head>
+<body>
+<form method="post">
+{% csrf_token %}
+{{ formset.management_form }}
+    <table border="1">
+        <thead>
+        <tr>
+            <th>标题</th>
+            <th>url</th>
+            <th>name</th>
+            <th>菜单</th>
+            <th>父权限</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for form in formset %}
+            <tr>
+                {% for field in form %}
+                    <td>{{ field }} <span style="color: red">{{ field.errors.0 }}</span></td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <input type="submit" value="提交数据">
+
+</form>
+
+
+</body>
+</html>
